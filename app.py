@@ -1,0 +1,66 @@
+from langchain.vectorstores import FAISS
+from langchain import hub
+from langchain.chains import RetrievalQA
+from langchain.llms import Ollama
+import pandas as pd
+from langchain.document_loaders import DataFrameLoader
+from langchain.embeddings.huggingface import HuggingFaceEmbeddings
+from langchain.text_splitter import CharacterTextSplitter
+from langchain.vectorstores import FAISS
+import streamlit as st
+
+st.title("Takshila")
+
+@st.cache_resource
+def load_vectorstore():
+    QA_CHAIN_PROMPT = hub.pull("rlm/rag-prompt-llama")
+    embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+    
+    PATH_TO_EMBEDDINGS = "gita-embedding"
+    db = FAISS.load_local(PATH_TO_EMBEDDINGS, embeddings = embeddings)
+    llm = Ollama(
+        base_url="http://localhost:11434",
+        model="llama2",
+        verbose=True,
+    
+    )
+    qa_chain = RetrievalQA.from_chain_type(
+        llm,
+        retriever=db.as_retriever(),
+        chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
+    )
+    return qa_chain
+
+if "messages" not in st.session_state:
+        st.session_state.messages = []
+        st.session_state.messages.append({"role": "assistant", "content": f"Jai Shree Krisha. Ask your doubts"})
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+qa_chain = load_vectorstore()
+
+prompt = st.chat_input()
+if prompt:
+    with st.chat_message("user"):
+        st.markdown(prompt)
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("assistant"):
+        BASE_PROMPT = """
+        You will always return markdown syntax in this formar.
+        Format:
+        # Sanskrit Verse:
+        # Transliteration:
+        # Translation:
+        # Meaning and Explanation:
+        
+        Please retrieve a relevant shloka from the Bhagavad Gita that discusses the concept of duty (Dharma) and its significance. Provide the shloka in Sanskrit, followed by its transliteration, translation, and the deeper meaning behind the verse.
+        Always answer in markdown format
+
+"""
+        END_PROMPT = "When asked for a question. give the releavnet sanskrit verse"
+        
+        message_placeholder = st.empty()
+        full_response = qa_chain({"query":BASE_PROMPT +prompt + END_PROMPT})["result"]
+        message_placeholder.markdown(full_response)
+    st.session_state.messages.append({"role": "assistant", "content": full_response})
