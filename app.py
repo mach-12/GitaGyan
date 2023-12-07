@@ -12,7 +12,13 @@ import streamlit as st
 st.title("Takshila")
 
 @st.cache_resource
+def on_startup():
+    st.session_state.messages = []
+    return 
+
+@st.cache_resource
 def load_vectorstore():
+    
     QA_CHAIN_PROMPT = hub.pull("rlm/rag-prompt-llama")
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
     
@@ -33,7 +39,8 @@ def load_vectorstore():
 
 if "messages" not in st.session_state:
         st.session_state.messages = []
-        st.session_state.messages.append({"role": "assistant", "content": f"Jai Shree Krisha. Ask your doubts"})
+        st.session_state.messages.append({"role": "assistant", "content": f"Jai Shree Krishna. Ask your doubts"})
+
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
@@ -41,10 +48,17 @@ for message in st.session_state.messages:
 qa_chain = load_vectorstore()
 
 prompt = st.chat_input()
+
 if prompt:
     with st.chat_message("user"):
         st.markdown(prompt)
-    st.session_state.messages.append({"role": "user", "content": prompt})
+
+    try:
+        st.session_state.messages.append({"role": "user", "content": prompt})
+    except:
+        # print("Hello")
+        st.session_state.messages = []
+
     with st.chat_message("assistant"):
         BASE_PROMPT = """
         You will always return markdown syntax in this formar.
@@ -54,11 +68,11 @@ if prompt:
         # Translation:
         # Meaning and Explanation:
         
-        Please retrieve a relevant shloka from the Bhagavad Gita that discusses the concept of duty (Dharma) and its significance. Provide the shloka in Sanskrit, followed by its transliteration, translation, and the deeper meaning behind the verse.
-        Always answer in markdown format
+        Please retrieve a relevant verse from the Bhagavad Gita that discusses the concept of duty (Dharma) and its significance. Provide the shloka in Sanskrit, followed by its transliteration, translation, and the deeper meaning behind the verse.
+        Always answer in markdown format. 
 
 """
-        END_PROMPT = "When asked for a question. give the releavnet sanskrit verse"
+        END_PROMPT = "When asked for a question. give the relevant sanskrit verse or just make conversation"
         
         message_placeholder = st.empty()
         full_response = qa_chain({"query":BASE_PROMPT +prompt + END_PROMPT})["result"]
