@@ -1,6 +1,6 @@
 # Takshila
 
-This project is a [description of what your project does]. It utilizes [technology/programming language/framework] to [purpose of the project].
+This project is a RAG application which can query gita
 
 ## Installation
 
