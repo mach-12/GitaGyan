@@ -1,7 +1,7 @@
 from langchain.vectorstores import FAISS
 from langchain import hub
 from langchain.chains import RetrievalQA
-from langchain.llms import Ollama
+from langchain.llms import Ollama, OpenAI
 import pandas as pd
 from langchain.document_loaders import DataFrameLoader
 from langchain.embeddings.huggingface import HuggingFaceEmbeddings
@@ -24,12 +24,9 @@ def load_vectorstore():
     
     PATH_TO_EMBEDDINGS = "gita-embedding"
     db = FAISS.load_local(PATH_TO_EMBEDDINGS, embeddings = embeddings)
-    llm = Ollama(
-        base_url="http://localhost:11434",
-        model="llama2",
-        verbose=True,
-    
-    )
+
+    llm = OpenAI(openai_api_key="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")
+
     qa_chain = RetrievalQA.from_chain_type(
         llm,
         retriever=db.as_retriever(),
@@ -63,10 +60,10 @@ if prompt:
         BASE_PROMPT = """
         You will always return markdown syntax in this formar.
         Format:
-        # Sanskrit Verse:
-        # Transliteration:
-        # Translation:
-        # Meaning and Explanation:
+        Sanskrit Verse:
+        Transliteration:
+        Translation:
+        Meaning and Explanation:
         
         Please retrieve a relevant verse from the Bhagavad Gita that discusses the concept of duty (Dharma) and its significance. Provide the shloka in Sanskrit, followed by its transliteration, translation, and the deeper meaning behind the verse.
         Always answer in markdown format. 
