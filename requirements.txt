@@ -1,7 +1,0 @@
-streamlit
-langchain
-pandas
-transformers
-faiss-cpu
-langchainhub
-sentence-transformers
